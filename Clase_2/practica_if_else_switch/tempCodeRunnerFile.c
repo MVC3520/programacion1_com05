@@ -1,0 +1,2 @@
+
+    aPagar = totalCompra - descuento;
