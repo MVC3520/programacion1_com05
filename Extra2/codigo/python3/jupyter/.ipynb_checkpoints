@@ -1,1 +1,760 @@
+# Tutorial de pandas
+El siguiente material está basado en:
 
+* Los tutoriales de [CODEBASICS](http://codebasicshub.com/): 
+  * YouTube: https://www.youtube.com/playlist?list=PLeo1K3hjS3uuASpe-1LjfG5f14Bnozjwy
+  * GitHub:  https://github.com/codebasics/py/tree/master/pandas
+  
+* El tutorial de [Pandas for Data Analysis de SciPy 2017 por Daniel Chen](https://www.youtube.com/watch?v=oGzU688xCUs)
+
+* El manual oficial de `pandas` para la versión 0.24.1:
+  * http://pandas.pydata.org/pandas-docs/stable/pandas.pdf   (2977 páginas)
+`pandas` es una biblioteca de software escrita como extensión de `NumPy` para manipulación y análisis de datos para el lenguaje de programación Python. En particular, ofrece estructuras de datos y operaciones para manipular tablas numéricas y series temporales.
+# Algunos comandos básicos de pandas
+Primero que todo cargamos la librería:
+import pandas as pd
+print("Estamos utilizando la versión de pandas", pd.__version__)
+## Estructuras de datos manejadas por pandas
+Dimensiones  | Nombre     | Descripción
+-------------|------------|------------
+1            |  Series    | Sirve para guardar series de datos (1D)
+2            |  DataFrame | Sirve para guardar tablas de datos (2D)
+
+El tipo `DataFrame` es un contenedor de `Series` y las `Series` son contenedores de escalares.
+
+- https://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.html
+- https://pandas.pydata.org/pandas-docs/stable/generated/pandas.Series.html
+Inicialmente se crea una `Serie`:
+s = pd.Series([1, 3, 5, float('nan'), 6, 8])
+s
+y creamos un `DataFrame` a partir de un diccionario:
+datos_climaticos = {
+    'día': ['1/1/2017','1/2/2017','1/3/2017','1/4/2017','1/5/2017','1/6/2017'],
+    'temperatura': [32,35,28,24,32,31],
+    'velocidad_viento': [6,7,2,7,4,2],
+    'evento': ['Lluvia', 'Sol', 'Nublado','Nublado','Lluvia', 'Sol']
+}
+df = pd.DataFrame(datos_climaticos)
+df
+Observe que un `DataFrame` es bastante similar a lo que contiene una hoja de MS EXCEL.
+Se muestra el tamaño del `DataFrame`:
+df.shape # filas, columnas = df.shape
+Observe que las columnas son de tipo `Series`:
+type(df['evento'])
+type(df)
+Alguna información importante sobre el `DataFrame`:
+df.info()
+## Filas
+df.head()  # si no se pone argumento se muestran 5 filas
+df.tail(2)  # si no se pone argumento se muestran 5 filas
+Se muestran los índices asociados a las filas:
+df.index
+Se muestra la segunda y tercera fila:
+df[1:3]
+df.loc[1]
+Lo siguiente fallará, ya que no existe una fila con un `index = -1`:
+#df.loc[-1]
+## Columnas
+Se muestran los índices de las columnas
+df.columns
+Estos son los tipos de datos de las columnas:
+df.dtypes
+Imprimimos una columna:
+df.evento
+O incluso mejor:
+df['evento']
+De hecho es preferible la notación anterior ya que, podría existir una colisión con los nombres reservados de los métodos y atributos del objeto `DataFrame`. Podemos también referirnos a dos o más columnas al mismo tiempo:
+df[['evento','temperatura']]
+df
+### Cambiando el tipo de dato de una columna
+Al mismo tiempo observe la forma como se crea una columna nueva:
+df['temperatura_como_float'] = df['temperatura'].astype(float)
+df
+## Borrando columnas
+Las columnas se pueden borrar de la siguiente manera:
+del df['temperatura_como_float']  # del df.temperatura_como_float no funciona
+df
+df = df.drop('evento', axis=1) # o utilice "inplace=True"
+df
+en el comando anterior, con axis=0, lo que pasa es que borra filas.
+## Algunas operaciones básicas con los DataFrames
+datos_climaticos = {
+    'día': ['1/1/2017','1/2/2017','1/3/2017','1/4/2017','1/5/2017','1/6/2017'],
+    'temperatura': [32,35,28,24,32,31],
+    'velocidad_viento': [6,7,2,7,4,2],
+    'evento': ['Lluvia', 'Sol', 'Nublado','Nublado','Lluvia', 'Sol']
+}
+df = pd.DataFrame(datos_climaticos)
+df
+A continuación se presenta un breve resumen estadístico de los datos:
+df.describe()
+O se calculan dichos datos uno a uno:
+print(df['temperatura'].mean())
+print(df['temperatura'].std())
+print(df['temperatura'].min())
+print(df['temperatura'].quantile(0.25))
+print(df['temperatura'].max())
+Las operaciones con las series son muchas y se listan aquí: https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.Series.html (busca en esa página `min()`, `max()`, `mean()`, etc).
+df['temperatura'] >= 32
+df[(df['temperatura'] >= 32) & (df['velocidad_viento'] >=6)]
+Se selecciona el día con la temperatura máxima:
+df['día'][df['temperatura'] == df.temperatura.max()]
+df[['día','temperatura']][df['temperatura'] == df.temperatura.max()]
+O incluso toda su fila:
+df[df['temperatura'] == df['temperatura'].max()]
+## Otras operaciones
+Transponiendo una tabla:
+df.T
+Los datos se pueden ordenar por una de las columnas:
+df.sort_values(by='temperatura')
+Se puede calcular un histograma de los datos con `.value_counts()`:
+df['evento'].value_counts()
+## Indices de los DataFrames
+df
+df.index
+En caso que no quiera utilizar como índices los números del 0 al 5 sino otra columna como las fechas, puedo hacer los siguiente:
+df.set_index('día', inplace=True)
+df
+El `inplace=True` hace que la tabla se modifique. Ahora se pueden hacer cosas como mostra la fila asociada a la fecha:
+df.loc['1/3/2017']
+Y se restaura el índice original:
+df.reset_index(inplace=True)
+df
+df.set_index('evento',inplace=True)
+df
+## Seleccionando los datos con `.loc`, `.at` e `.iloc`
+El `.loc` sirve para acceder a un grupo de filas y columnas utilizando etiquetas o un array booleano:
+df
+df.loc['Sol','temperatura']
+# df['Lluvia'] # fallaría
+df.loc['Lluvia']  
+df.loc[['Lluvia','Sol']]
+El `.at` permite acceder a un único valor:
+df.at['Sol','temperatura']
+El `.iloc` sirve para acceder a los datos utilizando enteros, de forma similar a como se acceden, indexan, y se aplica slicing a un array de `NumPy`.
+df
+df.iloc[3]
+Trayendo la última fila:
+df.iloc[-1]
+df.iloc[3,1] = 10
+df
+df.iloc[2:5,0]
+df.iloc[:,1]
+## Aplicando funciones a `DataFrame`s
+Creemos nuestro `DataFrame`:
+df = pd.DataFrame({
+    'a': [1, 2, 3],
+    'b': [10, 20, 30],
+    'c': [100, 200, 300]    
+})
+df
+Y hagamos operaciones con las columnas:
+df['a'] ** 2
+O creemos nuestras propias funciones y apliquémoslas a los `DataFrame`s:
+elevar_al_cuadrado = lambda x : x**2
+df['a'].apply(elevar_al_cuadrado)
+elevar_a_la_n = lambda x,n : x**n
+df['a'].apply(elevar_a_la_n, n=2)
+Observe que en este caso, se aplica la función a cada columna:
+def imprima(x):
+    print(x)
+    
+df.apply(imprima)
+Esto causará un error:
+# promedio3 = lambda x,y,z : (x + y + z)/3
+# df.apply(promedio3)
+La forma correcta de aplicar la función es:
+def promedio3(col):
+    x = col[0]
+    y = col[1]
+    z = col[2]
+    return (x + y + z)/3
+
+df.apply(promedio3)
+observe que dicha función se aplicó columna a columna.
+Para aplicar la función fila a fila, hacemos:
+df.apply(promedio3, axis=1)
+Intentemos ahora con datos reales:
+url = "https://raw.github.com/mattdelhey/kaggle-titanic/master/Data/train.csv"
+titanic = pd.read_csv(url)
+titanic
+Observe que tenemos 891 datos
+titanic.info()
+Creemos ahora tres funciones:
+import numpy as np
+
+def contar_faltantes(vec):
+    """Cuenta el número de datos faltantes en un vector    
+    """
+    null_vec   = pd.isnull(vec)   # vector of True/False
+    null_count = np.sum(null_vec) # True has a value of 1
+    return null_count
+
+def proporcion_faltantes(vec):
+    """Proporción de datos faltantes en un vector
+    """
+    num = contar_faltantes(vec)
+    return num/vec.size
+
+def proporcion_completos(vec):
+    """Proporción de datos completos en un vector
+    """
+    return 1 - proporcion_faltantes(vec)
+titanic.apply(contar_faltantes)
+titanic.apply(proporcion_faltantes)
+titanic.apply(proporcion_completos)
+Miremos a que personas no se les puso que se embarcaron:
+titanic.loc[pd.isnull(titanic['embarked']), :]
+Ahora fila por fila:
+faltantes_por_fila = titanic.apply(contar_faltantes, axis=1)
+faltantes_por_fila.head(10)
+faltantes_por_fila.value_counts()
+Creemos una columna con los datos faltantes por fila:
+titanic['num_faltantes'] = faltantes_por_fila
+Y mostremos 10 filas al azar de aquellas que tienen más de un valor faltante:
+titanic.loc[titanic['num_faltantes'] > 1, :].sample(10)
+# 3. Como crear un DataFrame
+## Leyendo un archivo CSV
+df = pd.read_csv("datos/datos_climaticos.csv")
+df
+## Leyendo un archivo de MS EXCEL
+df = pd.read_excel("datos/datos_climaticos.xlsx","Sheet1")
+df
+## Utilizando un diccionario
+datos_climaticos = {
+    'day': ['1/1/2017','1/2/2017','1/3/2017'],
+    'temperature': [32,35,28],
+    'windspeed': [6,7,2],
+    'event': ['Rain', 'Sunny', 'Snow']
+}
+df = pd.DataFrame(datos_climaticos)
+df
+## Utilizando una lista de tuplas
+datos_climaticos = [
+    ('1/1/2017',32,6,'Rain'),
+    ('1/2/2017',35,7,'Sunny'),
+    ('1/3/2017',28,2,'Snow')
+]
+df = pd.DataFrame(data=datos_climaticos, columns=['day','temperature','windspeed','event'])
+df
+## Utilizando una lista de diccionarios
+weather_data = [
+    {'day': '1/1/2017', 'temperature': 32, 'windspeed': 6, 'event': 'Rain'},
+    {'day': '1/2/2017', 'temperature': 35, 'windspeed': 7, 'event': 'Sunny'},
+    {'day': '1/3/2017', 'temperature': 28, 'windspeed': 2, 'event': 'Snow'},
+    
+]
+df = pd.DataFrame(weather_data)
+df
+## Utilizando un "structured array" de NumPy
+import numpy as np
+weather_data = np.zeros((3,), 
+                    dtype=[('day', 'S10'),
+                           ('temperature', float), 
+                           ('windspeed', float),
+                           ('event', 'S5')])
+
+weather_data[:] = [
+    ('1/1/2017',32,6,'Rain'),
+    ('1/2/2017',35,7,'Sunny'),
+    ('1/3/2017',28,2,'Snow')
+]
+
+df = pd.DataFrame(weather_data)
+
+df
+Existen más formas de crear `DataFrame`s. La lista entera se puede consultar aquí: https://pandas.pydata.org/pandas-docs/stable/user_guide/io.html
+# 4. Leyendo y escribiendo archivos CSV y XLSX
+## Leyendo un archivo CSV (con más detalle)
+Primero que todo visualicemos el archivo original para poder comparar:
+df = pd.read_csv("datos/stock_data.csv")
+df
+Observe que aquí no leeremos la primera fila del archivo CSV:
+df = pd.read_csv("datos/stock_data.csv", skiprows=1)
+df
+Y esto es equivalente a:
+df = pd.read_csv("datos/stock_data.csv", header=1)
+df
+Aquí escribiremos nuestros propios títulos:
+df = pd.read_csv("datos/stock_data.csv",
+                 header=0, 
+                 names = ["ganancias por acción","ingresos","precio","gerente"])
+df
+Aquí solo leeremos las dos primeras filas de datos:
+df = pd.read_csv("datos/stock_data.csv",  nrows=2)
+df
+Donde pandas encuentre un "n.a." o un "not available", colocará en el archivo CSV un correspondiente `NaN`:
+df = pd.read_csv("datos/stock_data.csv", na_values=["n.a.", "not available"])
+df
+Si `pandas` encuentra un:
+* **n.a.** en la columna *eps*
+* **-1** en la columna *revenue*
+* **n.a.** o **not available** en la columna *people*,
+
+colocará en el archivo CSV un correspondiente `NaN`:
+df = pd.read_csv("datos/stock_data.csv",  na_values={
+        'eps': ['not available'],
+        'revenue': [-1],
+        'people': ['n.a.', 'not available']
+    })
+df
+## Leyendo un archivo de MS EXCEL (con más detalle)
+Primero que todo visualicemos el archivo original para poder comparar:
+df = pd.read_excel("datos/stock_data.xlsx","Sheet1")
+df
+Los `converters` nos sirven como filtros de modo que al encontrar cierta información en la hoja de MS EXCEL, Python utiliza el convertidos para cambiar la información de la hoja. Por ejemplo:
+* si en la columna `people`, se encuentra un `n.a.`, se colocará `Sam Walton`
+* si en la columna `price` se encuentra un `n.a.`, se colocará un `50`.
+def convert_people_cell(cell):
+    if cell=="n.a.":
+        return 'Sam Walton'
+    return cell
+
+def convert_price_cell(cell):
+    if cell=="n.a.":
+        return 50
+    return cell
+    
+df = pd.read_excel("datos/stock_data.xlsx","Sheet1", converters= {
+        'people': convert_people_cell,
+        'price': convert_price_cell
+    })
+df
+
+# Como escribir un DataFrame a un archivo
+## Escribiendo un archivo CSV
+Observe que aquí no escribiremos el número de la fila:
+df.to_csv("archivo1.csv", index=False)
+%cat archivo1.csv
+df.columns
+Y aquí no escribiremos la fila con los títulos:
+df.to_csv("archivo2.csv",header=False)
+%cat archivo2.csv
+Aquí solo escribimos las columnas `tickers` y `price` y no se escribirá el número de la fila:
+df.to_csv("archivo3.csv", columns=["tickers","price"], index=False)
+%pycat archivo3.csv
+# Con este comando se ven las cosas con coloresf
+## Escribiendo un archivo de MS EXCEL
+Para guardar el `DataFrame` en una hoja de MS EXCEL de modo tal que la casilla superior izquierda de donde empiezo a escribir corresponda a la celda `B3` (fila 3, columna 2 en notación de MS EXCEL y fila 2, columna 1 en la notación de Python). Adicionalmente, el `index=False`, solicita que no se coloque una columna inicial con los índices que utiliza `pandas` para referirse a las filas del `DataFrame`.
+
+
+df.to_excel("archivo1.xlsx", sheet_name="stocks", index=False, 
+            startrow=2, startcol=1)
+Cree dos `DataFrames` y guárdelos en hojas separadas dentro del mismo archivo:
+df_stocks = pd.DataFrame({
+    'tickers': ['GOOGL', 'WMT', 'MSFT'],
+    'price': [845, 65, 64 ],
+    'pe': [30.37, 14.26, 30.97],
+    'eps': [27.82, 4.61, 2.12]
+})
+
+df_weather =  pd.DataFrame({
+    'day': ['1/1/2017','1/2/2017','1/3/2017'],
+    'temperature': [32,35,28],
+    'event': ['Rain', 'Sunny', 'Snow']
+})
+with pd.ExcelWriter('archivo2.xlsx') as writer:
+    df_stocks.to_excel(writer, sheet_name="stocks")
+    df_weather.to_excel(writer, sheet_name="weather")
+# 5. Manejando la información faltante
+El `NaN` y el `None` se utilizan para indicar valores faltantes. El NaN está codificado de varias formas en `NumPy`:
+from numpy import NaN, NAN, nan
+En `pandas` tenemos dos funciones especiales para detectar los NaNs:
+pd.isnull(NaN)
+pd.isnull(None)
+pd.isnull('x')
+pd.notnull(NaN)
+pd.notnull('x')
+Al leer las fechas, como estas se leen de un archivo CSV, por defecto ellas se leen como una cadena de texto. Sin embargo, quiero que esas fechas se manejen en Python como fechas, lo cual se hace utilizando el comando `parse_dates=['day']`.
+df = pd.read_csv("datos/weather_data_con_info_faltante.csv", parse_dates=['day'])
+
+# Verifiquemos que las fechas sean fechas
+print(type(df.day[0]))
+
+# Ahora mostremos el DataFrame
+df
+Para contar el número de `NaN`s de una `Serie` puedo hacer:
+df['temperature'].value_counts(dropna=False)
+O con:
+df.info()
+teniendo en cuenta que la columna `temperature`, tiene 5 datos en las 9 filas, es decir, tiene 4 faltantes (`NaN`s).
+Ahora, quiero que mis fechas sean el index con el cual trabajar. Recuerde que el `inplace` es para que se modifique el `DataFrame` original.
+df.set_index('day', inplace=True)
+df
+Grafiquemos las temperaturas:
+%matplotlib inline
+df.temperature.plot.bar()
+Llene todos los NaN con un valor en específico. En este caso, se están llenando con ceros.
+new_df = df.fillna(0)
+new_df
+Tal vez llenar con ceros no sea lo mejor, por lo que utilizando los siguientes comandos, especificamos como llenar dichos datos faltantes columna a columna
+new_df = df.fillna({
+        'temperature': 0,
+        'windspeed': 0,
+        'event': 'No Event'
+    })
+new_df
+Tal vez es mejor poner en esas casillas faltantes la lectura del día previo:
+new_df = df.fillna(method="ffill") # forward fill
+new_df
+Tal vez es mejor poner en esas casillas faltantes la lectura del día siguiente:
+new_df = df.fillna(method="bfill") # backwward fill
+new_df
+Con el siguiente comando traigo la información faltante de la columna de la derecha hacia la columna de la izquierda.
+new_df = df.fillna(method="bfill", axis="columns") # axis is either "index" or "columns"
+new_df
+Y aquí, cuando propago la información de los días anteriores o posteriores, lo hago máximo una vez:
+new_df = df.fillna(method="ffill",limit=1)
+new_df
+En ocasiones es conveniente interpolar los datos numéricos faltantes:
+new_df = df.interpolate()
+new_df
+Sin embargo, si se mira la tabla, dicha interpolación lineal no está teniendo en cuenta el tiempo de la medición. Aquí `time` interpola linealmente pero teniendo en cuenta el tiempo.
+new_df = df.interpolate(method="time") 
+new_df
+Note que la temperatura en 2017-01-04 es 29 y no el 30 de la interpolación lineal.
+
+Existen otros métodos para interpolación: `quadratic`, `piecewise_polynomial`, `cubic`, etc. Escriba en google: "dataframe interpolate" para ver la documentación.
+A veces no se quiere interpolar, sino simplemente, eliminar todas aquellas filas que contengan datos faltantes:
+new_df = df.dropna()
+new_df
+O solo aquellas filas que contengan datos faltantes en todas las columnas
+new_df = df.dropna(how='all')
+new_df
+Si quiero conservar aquellas filas que tengan datos en al menos dos columnas, hago los siguiente:
+new_df = df.dropna(thresh=2)
+new_df
+Si en vez de borrar filas, quiero insertar las fechas faltantes; eso se hace así:
+dt = pd.date_range("01-01-2017","01-11-2017")  # rango de fechas
+idx = pd.DatetimeIndex(dt)
+df.reindex(idx)
+### Haciendo cálculos con datos faltantes:
+Cuando se hace un cálculo se saltan los valores faltantes:
+df['temperature'].mean()
+Excepto si se utiliza la bandera `skipna=False`:
+df['temperature'].mean(skipna=False)
+# 6. Reemplazando una información por otra
+import numpy as np   # para el np.nan
+df = pd.read_csv("datos/weather_data_para_reemplazar1.csv")
+df
+Donde encuentre -99999, ponga un NaN:
+new_df = df.replace(-99999, value=np.NaN)
+new_df
+Donde encuentre -99999 ó -88888, ponga un cero:
+new_df = df.replace(to_replace=[-99999, -88888], value=0)
+new_df
+Reemplazando en cada columna por aparte. Se especifican los valores a reemplazar y ponemos en este caso un NaN
+new_df = df.replace({
+        'temperature': -99999,
+        'windspeed': -99999,
+        'event': '0'
+    }, np.nan)
+new_df
+Aquí reemplazaremos los -99999 por un NaN y los "no event" por "Sunny":
+new_df = df.replace({
+        -99999: np.nan,
+        'no event': 'Sunny',
+    })
+new_df
+Utilizamos *expresiones regulares* para reemplazar. Las expresiones regulares se utilizan para encontrar patrones en las cadenas a analizar.
+df = pd.read_csv("datos/weather_data_para_reemplazar2.csv")
+df
+Cuando se encuentre una letra A-Z o a-z en la columna temperature o cuando se encuentre un a-z o un / en la columna windspeed, reemplace estos caracteres por la cadena vacía '':
+# when windspeed is 6 mph, 7 mph etc. & temperature is 32 F, 28 F etc.
+new_df = df.replace({'temperature': '[A-Za-z]',
+                     'windspeed': '[a-z/]'},'', regex=True) 
+new_df
+Creemos una nueva lista:
+df = pd.DataFrame({
+    'score': ['exceptional','average', 'good', 'poor', 'average', 'exceptional'],
+    'student': ['rob', 'maya', 'parthiv', 'tom', 'julian', 'erica']
+})
+df
+Y en esa nueva lista, reemplace una lista de valores por otra lista de valores:
+new_df = df.replace(['poor', 'average', 'good', 'exceptional'], [1,2,3,4])
+new_df
+# 7. Agrupando datos
+## Ejemplo 7.1
+df = pd.read_csv("datos/agrupando_weather_by_cities.csv")
+df
+Se agrupan los datos por ciudades:
+g = df.groupby("city")
+g
+El objeto **DataFrameGroupBy** es algo así como:
+for city, data in g:
+    print("city:", city)
+    print("data:\n", data)    
+    print("\n")
+Miremos los datos de un grupo en específico:
+g.get_group('mumbai')
+Y ahora unos cuantos estadísticos de todos los grugos:
+g.max() # máximos para cada ciudad
+g.mean() # promedios para cada ciudad
+g.min() # mínimos para cada ciudad
+Ahora hagamos una tabla con algunas estadísticas:
+g.describe().T
+Cuantas muestras tiene cada grupo:
+g.size()
+Cuente el número de datos no faltantes:
+g.count()
+Grafiquemos cada uno de los grupos:
+%matplotlib inline
+g.plot()
+Vamos ahora a grupar las ciudades utilizando funciones definidas por el usuario.
+
+En particular se quieren crear tres grupos:
+* Días cuando la temperatura estaba entre 80 y 90
+* Días cuando la temperatura estaba entre 50 y 60
+* Días con otras temperaturas
+def grouper(df, idx, col):
+    if 80 <= df[col].loc[idx] <= 90:
+        return 'Temperatura entre 80-90'
+    elif 50 <= df[col].loc[idx] <= 60:
+        return 'Temperatura entre 50-60'
+    else:
+        return 'Otras temperaturas'
+g = df.groupby(lambda x: grouper(df, x, 'temperature'))
+g
+for key, d in g:
+    print("Llave de agrupamiento: {}".format(key))
+    print(d)
+    print('\n')
+Y de nuevo calculemos los máximos para cada grupo
+g.max() # máximos para cada ciudad
+## Ejemplo 7.2
+Cargamos una tabla separada no por comas sino por tabuladores:
+df = pd.read_csv('datos/gapminder.tsv', delimiter='\t')
+df
+El comando `.groupby()` crea un tipo especial de `DataFrame`, en el cual se almacena una partición de los datos, en este caso año por año:
+df.groupby('year')
+De ese `DataFrameGroupBy` extraiga la columna `lifeExp`:
+df.groupby('year')['lifeExp']
+Y calcúlele la media año por año, es decir en cada conjunto formado:
+# quitando el "groupby('year')" se hubiera calculado la media de la
+# columna 'lifeExp'; sin embargo, al aplicar el "groupby('year')", 
+# dicho promedio se hace para cada grupo de la partición
+df.groupby('year')['lifeExp'].mean()
+O incluso de dos columnas al tiempo:
+le_gpd = df.groupby('year')[['lifeExp', 'gdpPercap']].mean()
+le_gpd
+le_gpd.plot()
+Agrupe ahora los datos en dos niveles: `year` y `continent` y calcúle la media para las columnas indicadas:
+gbm = df.groupby(['year', 'continent'])[['lifeExp', 'gdpPercap']].mean()
+gbm
+Sencillamente ¡super poderoso!
+type(gbm)
+Y si quiero aplanar el `DataFrame` anterior puedo hacer:
+gbm.reset_index()
+El método `.unique()` permite decir cuales son los valores únicos. y el método `.nunique()` los cuenta. En este caso, dice el número de países por continente:
+
+https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.core.groupby.SeriesGroupBy.nunique.html
+df.groupby('continent')['country'].unique() 
+df.groupby('continent')['country'].nunique()
+# 8. Concatenando `DataFrame`s
+Definimos los `DataFrame`s:
+india_weather = pd.DataFrame({
+    "city": ["mumbai","delhi","banglore"],
+    "temperature": [32,45,30],
+    "humidity": [80, 60, 78]
+})
+india_weather
+us_weather = pd.DataFrame({
+    "city": ["new york","chicago","orlando"],
+    "temperature": [21,14,35],
+    "humidity": [68, 65, 75]
+})
+us_weather
+Ahora concatenamos ambos `DataFrames`:
+
+df = pd.concat([india_weather, us_weather])
+df
+Tenga en cuenta que así mismo se podría agregar una fila al `DataFrame`.
+Listemos ahora las filas con índice 0:
+df.loc[0]
+df.iloc[0]
+Observe los índices anteriores son los mismos que en la base original.
+
+Si queremos ignorar los índices, debemos hacer lo siguiente:
+df = pd.concat([india_weather, us_weather], ignore_index=True)
+df
+Si queremos colocar una llave para acceder a los `DataFrames`, pero "ya agrupados", hacemos lo siguiente:
+df = pd.concat([india_weather, us_weather], keys=["india", "us"])
+df
+De modo que:
+df.loc["us"]
+df.loc["india"]
+## Concatenando con el DataFrames teniendo en cuenta el mismo index
+temperature_df = pd.DataFrame({
+    "city": ["mumbai","delhi","banglore"],
+    "temperature": [32,45,30],
+}, index=[0,1,2])
+temperature_df
+Observe que el siguiente `DataFrame` tiene dos filas y el orden de las ciudades es diferentes:
+windspeed_df = pd.DataFrame({
+    "city": ["delhi","mumbai"],
+    "windspeed": [7,12],
+}, index=[1,0])  # 1=index de delhi y 0=index de mumbai en temperature_df
+windspeed_df
+Y los DataFrames se concatenan haciendo coincidir los índices:
+df = pd.concat([temperature_df,windspeed_df],axis=1)
+df
+## Concatenando una `Series` con un `DataFrame` (o sea, agregando una columna a la tabla)
+Se define la serie:
+s = pd.Series(["Humid","Dry","Rain"], name="event")
+s
+df = pd.concat([temperature_df,s],axis=1)
+df
+
+# 9. Fusionando `DataFrames`
+Primero, definimos un `DataFrame` que contendrá las temperaturas:
+df1 = pd.DataFrame({
+    "city": ["new york","chicago","orlando"],
+    "temperature": [21,14,35],
+})
+df1
+Luego, definimos un `DataFrame` que contendrá la humedad:
+df2 = pd.DataFrame({
+    "city": ["chicago","new york","orlando"],
+    "humidity": [65,68,75],
+})
+df2
+Estos `DataFrame`s se juntan utilizando el siguiente comando:
+df3 = pd.merge(df1, df2, on="city")
+df3
+Ahora, agreguemos una ciudad más:
+df1 = pd.DataFrame({
+    "city": ["new york","chicago","orlando", "baltimore"],
+    "temperature": [21,14,35, 38],
+})
+df1
+Y otra ciudad diferente:
+df2 = pd.DataFrame({
+    "city": ["chicago","new york","san diego"],
+    "humidity": [65,68,71],
+})
+df2
+Miremos como referencia esta imagen, para entender lo que se explicará a continuación:
+<img src="join_dataframes.png">
+Tomada de: https://stackoverflow.com/questions/38549/what-is-the-difference-between-inner-join-and-outer-join
+Si los intento unir, solo aparecen las ciudades comunes a ambos DataFrames, es decir, la intersección de los `DataFrames`:
+# aquí se está utilizando implícitamente on="city", how="inner"
+df3=pd.merge(df1,df2,on="city") 
+df3
+Pero como eventualmente hacer todas la uniones de todas las ciudades, debemos hacer:
+df3=pd.merge(df1,df2,on="city",how="outer")
+df3
+Aquí tomaremos los datos del conjunto de la izquierda (`df1`) y lo complementamos con la información de aquellas ciudades que aparecen en la intersección de `df1` y `df2`:
+df3=pd.merge(df1,df2,on="city",how="left")
+df3
+Aquí tomaremos los datos del conjunto de la derecha (`df2`) y lo complementamos con la información de aquellas ciudades que aparecen en la intersección de `df1` y `df2`:
+df3=pd.merge(df1,df2,on="city",how="right")
+df3
+Al hacer la fusión, quiero a veces saber de donde vino la información. Esto se puede hacer con el comando:
+df3=pd.merge(df1,df2,on="city",how="outer",indicator=True)
+df3
+Creemos de nuevo dos `DataFrame`s:
+df1 = pd.DataFrame({
+    "city": ["new york","chicago","orlando", "baltimore"],
+    "temperature": [21,14,35,38],
+    "humidity": [65,68,71, 75]
+})
+df1
+df2 = pd.DataFrame({
+    "city": ["chicago","new york","san diego"],
+    "temperature": [21,14,35],
+    "humidity": [65,68,71]
+})
+df2
+Con el siguiente comando, puedo "fusionar" la información repetida:
+df3= pd.merge(df1,df2,on="city",how="outer", suffixes=('_first','_second'))
+df3
+# 10. Tablas dinámicas (pivot tables)
+Supongamos que tenemos la siguiente información:
+df = pd.read_csv("datos/weather_pivot.csv")
+df
+Con el método `.pivot()` podemos mostrar la información de una forma más intuitiva o más fácil de entender:
+df.pivot(index='city',columns='date')
+# Mostrando solo la humedad:
+df.pivot(index='city',columns='date',values="humidity")
+df.pivot(index='date',columns='city')
+df.pivot(index='humidity',columns='city')
+## Tablas dinámicas
+Observe que para la misma fecha se tienen dos lecturas:
+df = pd.read_csv("datos/weather2_pivot.csv")
+df
+Con las tablas dinámicas podemos resumir y agregar la información de una forma más intuitiva en un `DataFrame`. Por ejemplo, a continuación mostramos los promedios por fecha:
+df.pivot_table(index="city",columns="date")
+O mostrando los máximos diarios
+import numpy as np
+df.pivot_table(index="city",columns="date",aggfunc=np.max)
+Ahora, mostremos una columna que muestre los resultados:
+df.pivot_table(index="city",columns="date", margins=True, aggfunc=np.max)
+Aquí tenemos la información mensual:
+df = pd.read_csv("datos/weather3_pivot.csv")
+df
+Convertimos la primera columna al formato fecha:
+df['date'] = pd.to_datetime(df['date'])
+Y luego resumimos los resultados mensuales. En este caso, sacamos el promedio:
+https://pandas.pydata.org/pandas-docs/version/0.23.4/generated/pandas.Grouper.html
+df.pivot_table(index=pd.Grouper(freq='M',key='date'),columns='city')
+# 11. "Derritiendo" `DataFrame`s
+El método `.melt()` se utiliza para transformar o cambiar la forma de presentación de los datos:
+df = pd.read_csv("datos/weather_melt.csv")
+df
+melted = pd.melt(df, id_vars=["day"], var_name='city', value_name='temperature')
+melted
+Aquí cada variable es una columna y cada observación es una fila. A este tipo de tablas se les denonima **tidy dataset**. La ventaja de ellas es que se les puede aplicar un `.groupby()` fácilmente.
+billboard = pd.read_csv('datos/billboard.csv')
+billboard.head()
+pd.melt(billboard,
+        id_vars=['year', 'artist', 'track', 'time', 'date.entered'], 
+        var_name='week', value_name='rank')
+
+
+
+
+# 12. Apilando y desapilando (stacking and unstacking)
+Primero que todo leemos los datos:
+df = pd.read_excel("datos/stocks_stacking.xlsx",header=[0,1])
+df
+Observe que la tabla tiene dos niveles de anidamiento en los títulos de las columnas.
+
+Podemos deshacer ese nivel de anidamiento así:
+df_stacked = df.stack() #  es lo mismo que: df.stack(level=1)
+df_stacked
+df.stack(level=0)
+df.stack(level=1)
+Con el siguiente comando, desapilamos lo apilado:
+df_stacked.unstack()
+Aquí tenemos tres niveles de encabezados:
+df2 = pd.read_excel("datos/stocks_3_levels_stacking.xlsx",header=[0,1,2])
+df2
+Miremos entonces como funcionaría `.stack()`:
+df2.stack() # es lo mismo que: df2.stack(level=2)
+df2.stack(level=0)
+df2.stack(level=1)
+Este comando es lo mismo que no poner argumentos:
+df2.stack(level=2)
+# 13. Tablas de contingencia (Contingency tables)
+In statistics, a **contingency table** (also known as a **cross tabulation** or **crosstab**) is a type of table in a matrix format that displays the (multivariate) frequency distribution of the variables. They are heavily used in survey research, business intelligence, engineering and scientific research. They provide a basic picture of the interrelation between two variables and can help find interactions between them.
+
+https://en.wikipedia.org/wiki/Contingency_table
+Carguemos la siguiente tabla:
+df = pd.read_excel("datos/survey_crosstabs.xls")
+df
+Podemos relacionar la información entre nacionalidad y mano que utiliza utilizando tablas de contingencia para mostrar la frecuencia en la que los eventos ocurren:
+# filas = primer argumento, columna =  segundo argumento
+pd.crosstab(df.Nationality,df.Handedness)
+O entre sexo y mano que se utiliza:
+pd.crosstab(df.Sex,df.Handedness)
+Con incluso un sumario con la frecuencia de ocurrencia de la segunda variable en total para la tabla:
+pd.crosstab(df.Sex,df.Handedness, margins=True)
+O incluso con dos niveles de anidamiento en las columnas:
+pd.crosstab(df.Sex, [df.Handedness,df.Nationality], margins=True)
+O dos niveles de anidamiento en las columnas:
+pd.crosstab([df.Nationality, df.Sex], [df.Handedness], margins=True)
+Ahora en vez de mostrar frecuencia, mostramos es proporción:
+pd.crosstab(df.Sex, df.Handedness, normalize='index')
+O incluso, promedios de la edad, discriminados por sexo y mano que se utiliza:
+import numpy as np
+pd.crosstab(df.Sex, df.Handedness, values=df.Age, aggfunc=np.average)
